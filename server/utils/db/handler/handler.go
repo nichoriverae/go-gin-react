@@ -6,52 +6,76 @@ import (
 	// Models
 	"go-gin-react/server/db/models"
 
+	// Gin and Gorm
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
 )
 
-var db *gorm.DB
-
-// UpdatePost handles PUT to update a post
-func UpdatePost(c *gin.Context) {
-	var post models.Post
-	id := c.Params.ByName("id")
-	if err := db.Where("id = ?", id).First(&post).Error; err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err)
-	}
-	c.BindJSON(&post)
-	db.Save(&post)
-	c.JSON(200, post)
-}
-
-// CreatePost handles POST request to create new post
-func CreatePost(c *gin.Context) {
-	var post models.Post
-	c.BindJSON(&post)
-	db.Create(&post)
-	c.JSON(200, post)
-}
-
-// GetPostByID handles GET one post by ID
-func GetPostByID(c *gin.Context) {
-	id := c.Params.ByName("id")
-	var post models.Post
-	if err := db.Where("id = ?", id).First(&post).Error; err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err)
-	} else {
-		c.JSON(200, post)
+// UpdateBlogPost handles PUT to update a blogPost
+func UpdateBlogPost(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var blogPost models.BlogPost
+		id := c.Params.ByName("id")
+		if err := db.Where("id = ?", id).First(&blogPost).Error; err != nil {
+			c.AbortWithStatus(404)
+			fmt.Println(err)
+		}
+		c.BindJSON(&blogPost)
+		db.Save(&blogPost)
+		c.JSON(200, blogPost)
 	}
 }
 
-// GetAllPosts handle GET all posts from the db
-func GetAllPosts(c *gin.Context) {
-	var posts []models.Post
-	if err := db.Find(&posts).Error; err != nil {
-		c.AbortWithStatus(404)
-		fmt.Println(err)
-	} else {
-		c.JSON(200, posts)
+// DeleteBlogPost handles DELETE request
+func DeleteBlogPost(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var blogPost models.BlogPost
+		id := c.Params.ByName("id")
+		fmt.Printf("The id requested is %s \n", id)
+		if err := db.Where("id = ?", id).Delete(&blogPost).Error; err != nil {
+			c.AbortWithStatus(400)
+			fmt.Println(err)
+		} else {
+			msg := fmt.Sprintf("blog post %s has been deleted", id)
+			c.JSON(200, gin.H{"message": msg})
+		}
 	}
 }
+	
+// CreateBlogPost handles POST request to create new blogPost
+func CreateBlogPost(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var blogPost models.BlogPost
+		c.BindJSON(&blogPost)
+		db.Create(&blogPost)
+		c.JSON(200, blogPost)
+	}
+}
+
+// GetBlogPostByID handles GET one blogPost by ID
+func GetBlogPostByID(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		id := c.Params.ByName("id")
+		var blogPost models.BlogPost
+		if err := db.Where("id = ?", id).First(&blogPost).Error; err != nil {
+			c.AbortWithStatus(404)
+			fmt.Println(err)
+		} else {
+				c.JSON(200, blogPost)
+		}
+	}
+}
+		
+// GetAllBlogPosts handle GET all posts from the db
+func GetAllBlogPosts(db *gorm.DB) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var blogPosts []models.BlogPost
+		if err := db.Find(&blogPosts).Error; err != nil {
+			c.AbortWithStatus(404)
+			fmt.Println(err)
+		} else {
+			c.JSON(200, blogPosts)
+		}
+	}
+}
+		

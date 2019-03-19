@@ -1,14 +1,24 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"os"
 	"net/http"
+	"github.com/joho/godotenv"
 
+	// DB packages - external
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
+	// Gin packages
 	"github.com/gin-gonic/contrib/static"
 	"github.com/gin-gonic/gin"
+
+	// DB - internal
+
+	"go-gin-react/server/db/models"
+	"go-gin-react/server/utils/db/handler"
+	// "go-gin-react/server/utils/db/migrate"
 )
 
 var db *gorm.DB
@@ -16,56 +26,47 @@ var err error
 
 func main() {
 
-	// Set up DB connection
-	db, err = gorm.Open("mysql", "admin:admin@tcp(127.0.0.1:3306)/db")
+	err := godotenv.Load("../.env")
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal("Error loading .env file")
+	}
+
+	dbConnStr := os.Getenv("MYSQLSTR")
+	
+	// Set up DB connection
+	db, err = gorm.Open("mysql", dbConnStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = db.DB().Ping(); err != nil {
+		log.Fatal(err)
 	}
 	defer db.Close()
+	db.AutoMigrate(&models.BlogPost{})
+	//migrate.Start(db)
 
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
 	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile("./client", true)))
+	router.Use(static.Serve("/", static.LocalFile("../client", true)))
 
 	// API Route Groups
-	// gin.H{} to send a message in JSON format
 	api := router.Group("/api/")
 	{
-		userAuth := api.Group("/auth/")
-		{
-			userAuth.GET("/", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "this is an auth sub api route",
-				})
-			})
-		}
+
 		// Blog Subgroup
 		blog := api.Group("/blog/")
 		{
-			blog.GET("/", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "GET all blog posts here",
-				})
-			})
-			blog.GET("/:id", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "GET blog post by id",
-				})
-			})
-			blog.PUT("/:id", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "modify an existing blog post",
-				})
-			})
-			blog.POST("/", func(c *gin.Context) {
-				c.JSON(http.StatusOK, gin.H{
-					"message": "POST to a new blogid",
-					// if there is an exsisting id don't post send an error
-					// could include some meta data
-				})
-			})
+			blog.GET("/", handler.GetAllBlogPosts(db))
+
+			blog.GET("/:id", handler.GetBlogPostByID(db))
+
+			blog.PUT("/:id", handler.UpdateBlogPost(db))
+
+			blog.POST("/", handler.CreateBlogPost(db))
+
+			blog.DELETE("/:id", handler.DeleteBlogPost(db))
 		}
 		// Begin api base routes
 		api.GET("/", func(c *gin.Context) {
