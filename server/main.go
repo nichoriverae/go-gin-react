@@ -11,10 +11,9 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 
 	// Gin packages
-	"github.com/gin-gonic/contrib/static"
+	"github.com/gin-contrib/static"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-
-	// DB - internal
 
 	"go-gin-react/server/db/models"
 	"go-gin-react/server/utils/db/handler"
@@ -48,8 +47,9 @@ func main() {
 	// Set the router as the default one shipped with Gin
 	router := gin.Default()
 
+	router.Use(cors.Default())
 	// Serve frontend static files
-	router.Use(static.Serve("/", static.LocalFile("../client", true)))
+	router.Use(static.Serve("/", static.LocalFile("../client/build/", true)))
 
 	// API Route Groups
 	api := router.Group("/api/")
