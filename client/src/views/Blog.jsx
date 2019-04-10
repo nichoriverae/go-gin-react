@@ -8,52 +8,37 @@ class Blog extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      title: '',
-      content: ''
+      blogArray: []
     };
-
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.blogApi = new BlogApi({ fetch: fetchRequest, apiString: apiString });
   }
 
-  handleChange(event) {
-    const name = event.target.name;
-    const value = event.target.value;
-
-    this.setState({
-      [name]: value
-    })
-  }
-
-  handleSubmit(event) {
-    let data = {
-      title: this.state.title,
-      content: this.state.content
-    }
-    let blogApi = new BlogApi({ fetch: fetchRequest, apiString: apiString });
-    blogApi.create(data).then(response => console.log(response));
-    event.preventDefault();
+  componentDidMount() {
+    this.blogApi
+      .getAll()
+      .then((
+        blogPosts // array of response, error
+      ) =>
+        blogPosts.map(blogPost => this.setState({ blogArray: blogPosts[0] }))
+      )
+      .catch(error => console.log(error));
   }
 
   render() {
     return (
       <div>
-        <ul className="blogposts__container">
-          <BlogPosts blogposts={this.props.blogposts} />
-        </ul>
-        <div className="">
-          <form onSubmit={this.handleSubmit}>
-            <label>
-              Title:
-              <input type="text" name="title" value={this.state.title} onChange={this.handleChange} />
-            </label>
-            <label>
-              Content:
-              <input type="text" name="content" value={this.state.content} onChange={this.handleChange} />
-            </label>
-            <input type="submit" value="submit"/>
-          </form>
-        </div>
+        {this.state.blogArray === undefined ? (
+          <div>...Loading</div>
+        ) : (
+          <div>
+            <ul className="blogposts__container">
+              <BlogPosts
+                blogPosts={this.state.blogArray}
+                blogHandlers={this.blogApi}
+              />
+            </ul>
+          </div>
+        )}
       </div>
     );
   }

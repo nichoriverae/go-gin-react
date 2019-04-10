@@ -10,7 +10,7 @@ const fetchRequest = (url, init = { method: 'GET' }) => {
   return fetch(url, {headers, ...init}).then(response =>
     response
       .json()
-      .then(json => ({ json, response}))
+      .then(json => ({ json, response }))
       .then(({ json, response }) => {
         if (!response.ok) {
           throw json;

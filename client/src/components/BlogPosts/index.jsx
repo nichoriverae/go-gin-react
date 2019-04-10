@@ -1,39 +1,33 @@
 import React from 'react';
-import { BlogApi } from '../../api/blog';
-import fetchRequest from '../../utils';
-import { apiString } from '../../utils/config';
+import View from './View';
+import Proptypes from 'prop-types';
 
 class BlogPosts extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      id: this.props.state.BlogPosts.ID
-    }
+  static propTypes = {
+    blogHandlers: Proptypes.object.isRequired,
+    blogPosts: Proptypes.array.isRequired
   }
 
-  handleDelete() {
-    const id = this.state.id;
-    const blogApi = new BlogApi({fetch: fetchRequest, apiString: apiString});
-    console.log(id);
-  }
+  handleChange = id => {
+    this.props.blogHandlers.createOrUpdate(id);
+  };
+
+  handleDelete = id => {
+    this.props.blogHandlers.delete(id);
+  };
 
   render() {
+    const {blogPosts} = this.props;
+
     return (
       <div>
-        {
-          this.props.blogposts.map(blogpost => (
-            <li className="blogposts__item" key={blogpost.ID}>
-              <p className="blogposts__item__title">{blogpost.Title}</p>
-              <p className="blogposts__item__content">{blogpost.Content}</p>
-              <div className="buttons is-grouped is-centered">
-                <button className="button">Update</button>
-                <button className="button" onClick={this.handleDelete}>Delete</button>
-              </div>
-            </li>
-          ))
-        } 
+        <View
+          blogPosts={blogPosts}
+          handleChange={this.handleChange}
+          handleDelete={this.handleDelete}
+        />
       </div>
-    ) 
+    );
   }
 }
 

@@ -13,8 +13,8 @@ export class BlogApi {
     return this.fetch(url)
   };
 
-  create = (data) => this.fetch(this.apiString, {
-    method: "POST",
+  createOrUpdate = (data) => this.fetch(this.apiString, {
+    method: "PUT",
     body: {
       title: data.title,
       content: data.content,
@@ -22,7 +22,7 @@ export class BlogApi {
   });
 
   delete = (id) => {
-    const url = new URL(`${this.apiString}/${id}`);
+    const url = new URL(`${this.apiString}${id}`);
     return this.fetch(url, {
       method: "DELETE",
     })
